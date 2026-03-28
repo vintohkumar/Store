@@ -1,0 +1,4 @@
+# Ignore node_modules folders
+Client/node_modules/
+Client/.next/
+Server/.venv/
