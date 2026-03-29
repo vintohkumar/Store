@@ -2,3 +2,6 @@
 Client/node_modules/
 Client/.next/
 Server/.venv/
+Server/.env
+/Server/__pycache__
+Server/.env.example

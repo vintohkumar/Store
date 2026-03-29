@@ -1,0 +1,22 @@
+
+Local SMTP setup (quick steps)
+1) Run Mailpit locally (recommended for dev)
+docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
+Mail inbox UI: http://127.0.0.1:8025
+
+
+2) Update Server/.env SMTP values
+SMTP_HOST=127.0.0.1
+SMTP_PORT=1025
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_FROM_EMAIL=no-reply@vastra.local
+SMTP_USE_TLS=false
+
+OTP_SECRET=replace-with-long-random-secret
+OTP_EXPOSE_DEV_CODE=true
+OTP_RESEND_COOLDOWN_SECONDS=30
+OTP_MAX_SEND_PER_HOUR=8
+For production, set:
+
+OTP_EXPOSE_DEV_CODE=false

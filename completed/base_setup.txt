@@ -1,0 +1,176 @@
+# Clothing Store Project - Setup Status (Conversation Summary)
+
+Last updated: 2026-03-30
+
+============================================================
+1) OVERALL ARCHITECTURE
+============================================================
+
+[DONE] Frontend migrated from static HTML to Next.js App Router
+[DONE] Backend configured as Flask Python API
+[DONE] Frontend <-> Backend integration via API base URL
+[DONE] Project docs updated in README for current stack
+
+[PENDING] Production deployment setup (Vercel + production Flask host)
+[PENDING] CI/CD pipeline and environment-based deployment workflow
+
+============================================================
+2) FRONTEND (NEXT.JS + CSS)
+============================================================
+
+[DONE] Core landing page implemented in Next.js:
+       - app/layout.js
+       - app/page.js
+       - app/globals.css
+
+[DONE] Responsive premium landing design implemented:
+       - dynamic diagonal sections
+       - floating chips
+       - geometric overlays
+       - category and product sections
+       - testimonials, FAQ, final CTA, footer
+
+[DONE] Aura-inspired product cards implemented
+[DONE] 3D card effects (tilt + glow + shine) added
+[DONE] Reduced-motion fallback preserved
+
+[DONE] Header upgraded with:
+       - top-right icon group
+       - profile dropdown
+       - men/women mega panel
+       - icon-based expandable search control
+
+[DONE] Search behavior implemented:
+       - icon by default
+       - input expansion on hover/click
+       - search submit filters products
+       - no-result + clear search state
+
+[DONE] Profile dropdown implemented with required options:
+       - Login/Signup or Logout (state based)
+       - Orders
+       - Wishlist
+       - Giftcards
+       - Contact Us
+
+[DONE] Additional Next routes/pages added:
+       - /login
+       - /cart
+       - /favorites
+       - /profile
+       - /orders
+       - /giftcards
+
+[PENDING] Real product listing/search API integration (server-side query/filter)
+[PENDING] Product details page and deep link routing by slug
+[PENDING] Cart persistence and checkout UI integration
+
+============================================================
+3) AUTHENTICATION (OTP)
+============================================================
+
+[DONE] OTP login UI supports:
+       - Mobile number + OTP
+       - Email + OTP
+
+[DONE] OTP API endpoints implemented in Flask:
+       - POST /api/auth/send-otp
+       - POST /api/auth/verify-otp
+
+[DONE] OTP operational controls added:
+       - OTP expiry
+       - resend cooldown
+       - max sends per hour
+       - attempt limiting on verify
+
+[DONE] OTP hashing implemented using OTP_SECRET
+[DONE] Login state persisted in localStorage after successful OTP verify
+[DONE] Logout flow implemented from profile dropdown
+
+[DONE] Real provider hooks added:
+       - SMS via Twilio API
+       - Email via SMTP
+
+[DONE] Provider health endpoint added:
+       - GET /api/auth/provider-health
+
+[PENDING] Replace in-memory OTP store with database/redis-backed OTP store
+[PENDING] Production-grade session/JWT token issuance and verification
+[PENDING] Rate-limiting at IP + identifier level with centralized store
+[PENDING] MFA abuse protection and bot mitigation (captcha/risk checks)
+
+============================================================
+4) LOGGING
+============================================================
+
+[DONE] Server logging implemented to:
+       - logs/server_logs.txt
+
+[DONE] Server logs include:
+       - request start metadata
+       - request completion status + latency
+       - sanitized payload handling
+       - unhandled exception logs
+
+[DONE] Client logging implemented to:
+       - logs/client_logs.txt
+
+[DONE] Client action logging includes:
+       - page views
+       - clicks
+       - form submits
+       - OTP interaction events
+
+[DONE] Next API route for client logging:
+       - POST /api/logs
+
+[DONE] malformed/empty JSON handling added in /api/logs route
+
+[PENDING] Log rotation/retention policy (size/date-based)
+[PENDING] Centralized observability stack (ELK/Loki/Grafana/etc.)
+
+============================================================
+5) BACKEND / DATABASE
+============================================================
+
+[DONE] Flask startup includes DB init attempt and health reporting
+[DONE] DB helper integration present (check_connection, initialize_database)
+[DONE] Existing database and security scripts are in repo and referenced
+
+[PENDING] End-to-end validated DB migrations and migration tooling
+[PENDING] Full auth/user/order schema integration with frontend routes
+[PENDING] Persistence for cart, wishlist, profile, orders pages
+
+============================================================
+6) TESTING / VALIDATION IN THIS CONVERSATION
+============================================================
+
+[DONE] Multiple Next.js production builds completed successfully
+[DONE] Repeated lint checks on modified files passed
+[DONE] API/frontend integration paths validated at code level
+
+[PENDING] Full runtime regression testing with both servers up
+[PENDING] Automated test suite (unit/integration/e2e)
+[PENDING] Browser compatibility matrix testing
+
+============================================================
+7) DEV OPS / LOCAL RUN STATUS
+============================================================
+
+[DONE] Local run instructions documented in README
+[DONE] SMTP local testing path documented (Mailpit)
+[DONE] .env.example expanded for OTP and provider config
+
+[PENDING] Confirmed installation/runtime fix for Python on all target machines
+[PENDING] Production secrets management strategy
+[PENDING] Secure deployment hardening checklist execution
+
+============================================================
+8) KNOWN OPEN ITEMS (NEXT PRIORITY)
+============================================================
+
+1. Implement DB/Redis-backed OTP storage (remove volatile in-memory OTP store)
+2. Add JWT/session auth and protect user-specific routes
+3. Connect orders, wishlist, cart, profile pages to real backend data
+4. Add log rotation and monitoring
+5. Complete deployment + CI/CD

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5000";
 
@@ -88,6 +89,21 @@ const FAQ_ITEMS = [
   },
 ];
 
+const MEGA_PANELS = {
+  men: [
+    { title: "Apparel", items: ["Shirts", "Polos", "Jeans", "T-Shirts", "Sweatshirts", "Jackets"] },
+    { title: "Underwear", items: ["Briefs", "Trunks", "Vests", "Lounge Sets"] },
+    { title: "Footwear", items: ["Sneakers", "Sandals", "Slides", "Loafers"] },
+    { title: "Accessories", items: ["Belts", "Wallets", "Backpacks", "Caps"] },
+  ],
+  women: [
+    { title: "Ethnic Wear", items: ["Kurtas", "Sarees", "Dress Materials", "Dupattas"] },
+    { title: "Western", items: ["Dresses", "Tops", "Denim", "Co-ord Sets"] },
+    { title: "Footwear", items: ["Heels", "Flats", "Sneakers", "Sandals"] },
+    { title: "Accessories", items: ["Handbags", "Jewellery", "Scarves", "Belts"] },
+  ],
+};
+
 function formatPriceINR(amount) {
   const formatted = new Intl.NumberFormat("en-IN").format(Number(amount) || 0);
   return `Rs ${formatted}`;
@@ -95,10 +111,19 @@ function formatPriceINR(amount) {
 
 export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState(null);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchDraft, setSearchDraft] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
+  const [activeSearchLabel, setActiveSearchLabel] = useState("");
   const [summary, setSummary] = useState(FALLBACK_SUMMARY);
   const [products, setProducts] = useState(FALLBACK_PRODUCTS);
   const [testimonials, setTestimonials] = useState(FALLBACK_TESTIMONIALS);
   const [openFaq, setOpenFaq] = useState(null);
+  const profileMenuRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const year = useMemo(() => new Date().getFullYear(), []);
 
@@ -109,15 +134,27 @@ export default function HomePage() {
     const relativeY = (event.clientY - rect.top) / rect.height;
     const rotateY = (relativeX - 0.5) * 12;
     const rotateX = (0.5 - relativeY) * 12;
+    const translateX = (relativeX - 0.5) * 10;
+    const translateY = (relativeY - 0.5) * 10;
+    const pointerX = `${(relativeX * 100).toFixed(2)}%`;
+    const pointerY = `${(relativeY * 100).toFixed(2)}%`;
 
     card.style.setProperty("--rotateX", `${rotateX.toFixed(2)}deg`);
     card.style.setProperty("--rotateY", `${rotateY.toFixed(2)}deg`);
+    card.style.setProperty("--translateX", `${translateX.toFixed(2)}px`);
+    card.style.setProperty("--translateY", `${translateY.toFixed(2)}px`);
+    card.style.setProperty("--pointerX", pointerX);
+    card.style.setProperty("--pointerY", pointerY);
   }
 
   function handleCardMouseLeave(event) {
     const card = event.currentTarget;
     card.style.setProperty("--rotateX", "0deg");
     card.style.setProperty("--rotateY", "0deg");
+    card.style.setProperty("--translateX", "0px");
+    card.style.setProperty("--translateY", "0px");
+    card.style.setProperty("--pointerX", "50%");
+    card.style.setProperty("--pointerY", "50%");
   }
 
   useEffect(() => {
@@ -186,6 +223,72 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, [products, testimonials]);
 
+  useEffect(() => {
+    const syncAuthState = () => {
+      if (typeof window === "undefined") {
+        return;
+      }
+      setIsLoggedIn(Boolean(window.localStorage.getItem("va_auth_user")));
+    };
+
+    syncAuthState();
+    window.addEventListener("storage", syncAuthState);
+    return () => window.removeEventListener("storage", syncAuthState);
+  }, []);
+
+  useEffect(() => {
+    const onDocClick = (event) => {
+      if (!profileMenuRef.current) {
+        return;
+      }
+      if (!profileMenuRef.current.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  function handleLogout() {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("va_auth_user");
+      window.dispatchEvent(new Event("storage"));
+    }
+    setIsLoggedIn(false);
+    setIsProfileMenuOpen(false);
+  }
+
+  const filteredProducts = useMemo(() => {
+    if (!activeSearch) {
+      return products;
+    }
+    const query = activeSearch.toLowerCase();
+    return products.filter((product) => {
+      const bag = `${product.name || ""} ${product.fabric_note || ""} ${product.tag || ""}`.toLowerCase();
+      return bag.includes(query);
+    });
+  }, [products, activeSearch]);
+
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    const term = searchDraft.trim();
+    setActiveSearch(term);
+    setActiveSearchLabel(term);
+    setIsSearchOpen(true);
+
+    const section = document.getElementById("bestsellers");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function clearSearch() {
+    setSearchDraft("");
+    setActiveSearch("");
+    setActiveSearchLabel("");
+    setIsSearchOpen(false);
+  }
+
   return (
     <>
       <div className="announcement-bar">
@@ -194,56 +297,211 @@ export default function HomePage() {
       </div>
 
       <header className="site-header" id="top">
-        <div className="container nav-wrap">
+        <div className="container header-top">
           <a className="brand" href="#top" aria-label="Vastra Atelier home">
             <span className="brand-mark">VA</span>
             <span className="brand-text">Vastra Atelier</span>
           </a>
 
-          <button
-            className="menu-toggle"
-            type="button"
-            aria-label="Open menu"
-            aria-expanded={isMenuOpen}
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          <div className="header-actions">
+            <div
+              className={`search-trigger-wrap ${isSearchOpen ? "is-open" : ""}`}
+              onMouseEnter={() => setIsSearchOpen(true)}
+              onMouseLeave={() => {
+                if (!searchDraft.trim()) {
+                  setIsSearchOpen(false);
+                }
+              }}
+            >
+              <button
+                className="icon-action"
+                type="button"
+                aria-label="Search"
+                title="Search"
+                onClick={() => {
+                  setIsSearchOpen(true);
+                  setTimeout(() => searchInputRef.current?.focus(), 0);
+                }}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="M20 20l-4.2-4.2"></path>
+                </svg>
+              </button>
+              <form className="header-search-inline" onSubmit={handleSearchSubmit} role="search">
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  placeholder="Search products"
+                  value={searchDraft}
+                  onChange={(event) => setSearchDraft(event.target.value)}
+                />
+                <button type="submit">Search</button>
+              </form>
+            </div>
 
-          <nav className="desktop-nav" aria-label="Primary">
-            <a href="#featured">Collections</a>
-            <a href="#craft">Craft</a>
-            <a href="#bestsellers">New Arrivals</a>
-            <a href="#story">About</a>
-            <a href="#contact">Contact</a>
+            <Link className="icon-action" href="/cart" aria-label="Cart" title="Cart">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 6h2l1.2 8.3a1.5 1.5 0 0 0 1.5 1.3h7.6a1.5 1.5 0 0 0 1.5-1.2L19 8H7"></path>
+                <circle cx="10" cy="19" r="1.4"></circle>
+                <circle cx="16" cy="19" r="1.4"></circle>
+              </svg>
+            </Link>
+            <div className="profile-menu-wrap" ref={profileMenuRef}>
+              <button
+                className="icon-action"
+                type="button"
+                aria-label="User profile"
+                title="User profile"
+                aria-expanded={isProfileMenuOpen}
+                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="8.2" r="3.2"></circle>
+                  <path d="M5.5 19.2a6.5 6.5 0 0 1 13 0"></path>
+                </svg>
+              </button>
+
+              {isProfileMenuOpen && (
+                <div className="profile-dropdown">
+                  <div className="profile-dropdown-top">
+                    <h4>Welcome</h4>
+                    <p>Access your account and manage your orders</p>
+                    {!isLoggedIn ? (
+                      <Link
+                        href="/login"
+                        className="profile-primary-btn"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        LOGIN / SIGNUP
+                      </Link>
+                    ) : (
+                      <button type="button" className="profile-primary-btn" onClick={handleLogout}>
+                        LOGOUT
+                      </button>
+                    )}
+                  </div>
+
+                  <ul className="profile-menu-list">
+                    <li>
+                      <Link href="/orders" onClick={() => setIsProfileMenuOpen(false)}>
+                        Orders
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/favorites" onClick={() => setIsProfileMenuOpen(false)}>
+                        Wishlist
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/giftcards" onClick={() => setIsProfileMenuOpen(false)}>
+                        Giftcards
+                      </Link>
+                    </li>
+                    <li>
+                      <a href="#contact" onClick={() => setIsProfileMenuOpen(false)}>
+                        Contact Us
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+            <Link className="icon-action" href="/favorites" aria-label="Favorites" title="Favorites">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 20s-6.5-3.9-8.6-7.5C1.7 9.6 3 6 6.8 6c2 0 3.4 1.2 4.2 2.4C11.8 7.2 13.2 6 15.2 6c3.8 0 5.1 3.6 3.4 6.5C16.5 16.1 12 20 12 20z"></path>
+              </svg>
+            </Link>
+
+            <button
+              className="menu-toggle"
+              type="button"
+              aria-label="Open menu"
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
+        </div>
+
+        <div className="mega-nav-wrap" onMouseLeave={() => setActivePanel(null)}>
+          <nav className="mega-nav container" aria-label="Primary categories">
+            <button type="button" className="nav-pill">
+              Sale
+            </button>
+            <button type="button" className="nav-pill">
+              New Arrivals
+            </button>
+            <button
+              type="button"
+              className={`nav-pill ${activePanel === "men" ? "active" : ""}`}
+              onMouseEnter={() => setActivePanel("men")}
+              onFocus={() => setActivePanel("men")}
+              onClick={() => setActivePanel((prev) => (prev === "men" ? null : "men"))}
+              aria-expanded={activePanel === "men"}
+            >
+              Men
+            </button>
+            <button
+              type="button"
+              className={`nav-pill ${activePanel === "women" ? "active" : ""}`}
+              onMouseEnter={() => setActivePanel("women")}
+              onFocus={() => setActivePanel("women")}
+              onClick={() => setActivePanel((prev) => (prev === "women" ? null : "women"))}
+              aria-expanded={activePanel === "women"}
+            >
+              Women
+            </button>
+            <button type="button" className="nav-pill">
+              Accessories
+            </button>
           </nav>
 
-          <a className="btn btn-primary desktop-cta" href="#bestsellers">
-            Shop Now
-          </a>
+          {activePanel && (
+            <div className="mega-panel">
+              <div className="container mega-panel-grid">
+                {MEGA_PANELS[activePanel].map((column) => (
+                  <div key={column.title}>
+                    <h4>{column.title}</h4>
+                    <ul>
+                      {column.items.map((item) => (
+                        <li key={item}>
+                          <a href="#featured">{item}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <nav className={`mobile-nav ${isMenuOpen ? "is-open" : ""}`} aria-label="Mobile navigation">
           <a href="#featured" onClick={() => setIsMenuOpen(false)}>
-            Collections
+            Sale
           </a>
-          <a href="#craft" onClick={() => setIsMenuOpen(false)}>
-            Craft
-          </a>
-          <a href="#bestsellers" onClick={() => setIsMenuOpen(false)}>
+          <a href="#featured" onClick={() => setIsMenuOpen(false)}>
             New Arrivals
           </a>
+          <a href="#craft" onClick={() => setIsMenuOpen(false)}>
+            Men
+          </a>
+          <a href="#bestsellers" onClick={() => setIsMenuOpen(false)}>
+            Women
+          </a>
           <a href="#story" onClick={() => setIsMenuOpen(false)}>
-            About
+            Accessories
           </a>
           <a href="#contact" onClick={() => setIsMenuOpen(false)}>
             Contact
           </a>
-          <a className="btn btn-primary" href="#bestsellers" onClick={() => setIsMenuOpen(false)}>
-            Shop Now
-          </a>
+          <Link className="btn btn-primary" href="/login" onClick={() => setIsMenuOpen(false)}>
+            Login with OTP
+          </Link>
         </nav>
       </header>
 
@@ -415,10 +673,20 @@ export default function HomePage() {
             <div className="section-head reveal">
               <p className="eyebrow">Best Sellers</p>
               <h2>Trending Styles This Season</h2>
+              {activeSearch ? (
+                <div className="search-feedback">
+                  <p>
+                    Search results for: <strong>"{activeSearchLabel}"</strong>
+                  </p>
+                  <button type="button" onClick={clearSearch}>
+                    Clear
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             <div className="product-grid">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <article
                   key={product.name}
                   className="product-card product-card-3d reveal"
@@ -427,6 +695,7 @@ export default function HomePage() {
                 >
                   <div className="product-card-shell">
                     <div className="card-glow"></div>
+                    <div className="card-shine"></div>
                     <div className="product-media">
                       <img src={product.image_url} alt={product.alt || product.name} />
                       <span className="product-chip">{product.tag || "Classic"}</span>
@@ -445,6 +714,14 @@ export default function HomePage() {
                 </article>
               ))}
             </div>
+            {filteredProducts.length === 0 ? (
+              <div className="search-empty-state">
+                <p>No products found for "{activeSearchLabel}".</p>
+                <button type="button" className="btn btn-ghost" onClick={clearSearch}>
+                  Reset Search
+                </button>
+              </div>
+            ) : null}
           </div>
         </section>
 

@@ -1,0 +1,65 @@
+Implemented and executed the next hardening actions from plan/auth_security_plan.txt, and documented them.
+
+What I already completed
+Added Server/security_hardening.sql with:
+default-deny grants on public
+role-based table/sequence privileges
+restricted access to login_sessions
+RLS enable + force + policies on 11 user-owned tables
+Applied the script successfully on your live DB (db_admin, port 5433).
+Verified:
+RLS enabled+forced on all targeted tables
+app_user has no direct grants on login_sessions
+Added set_app_user_context() in Server/db.py for RLS-aware queries.
+Updated docs:
+README.md now includes security-hardening usage and TLS setup steps.
+completed/database_design.txt now marks completed vs pending security features.
+Step 1: Enable PostgreSQL TLS + enforce client SSL (how to do it)
+You asked specifically about this, so here is the practical setup for your Windows PostgreSQL 18 instance.
+
+1) Generate server cert/key (PEM)
+PostgreSQL needs these in the data directory:
+
+D:\Program Files\PostgreSQL\18\data\server.crt
+D:\Program Files\PostgreSQL\18\data\server.key
+If you have OpenSSL available:
+
+cd "D:\Program Files\PostgreSQL\18\data"
+openssl req -new -x509 -days 365 -nodes -text -out server.crt -keyout server.key -subj "/CN=localhost"
+Then restrict key file permissions (important):
+
+Ensure only PostgreSQL service account + admins can read server.key.
+2) Update postgresql.conf
+Edit D:\Program Files\PostgreSQL\18\data\postgresql.conf:
+
+ssl = on
+keep your existing port = 5433
+(Optional hardening)
+
+listen_addresses = 'localhost' if DB is local-only.
+3) Enforce SSL in pg_hba.conf
+Edit D:\Program Files\PostgreSQL\18\data\pg_hba.conf and use hostssl entries for app connections, e.g.:
+
+hostssl clothing_store app_user 127.0.0.1/32 scram-sha-256
+hostssl clothing_store db_admin 127.0.0.1/32 scram-sha-256
+Remove/replace broader non-SSL host lines for those users if present.
+
+4) Restart PostgreSQL service
+Restart-Service postgresql-x64-18
+5) Enforce SSL from app
+In Server/.env:
+
+DB_PORT=5433
+DB_SSLMODE=require (minimum)
+For strongest mode:
+
+use DB_SSLMODE=verify-full
+provide trusted CA cert and hostname that matches cert CN/SAN.
+6) Verify
+Run in psql:
+
+SHOW ssl;
+SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid();
+Expected: on and true.
+
+If you want, next I can add a dedicated SQL script for db_migrator + db_app role split (fully removing DDL capability from runtime role) and apply/verify it exactly like I did for RLS.

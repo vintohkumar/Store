@@ -1,0 +1,184 @@
+Below is a production-grade, end-to-end test framework design for your textile e-commerce system covering Client + Server + AI flows. This is structured for confidence at scale (CI/CD ready), not just basic testing.
+
+🧠 1. TESTING STRATEGY (TEST PYRAMID)
+4
+🔷 Distribution
+Unit Tests (60%) → Fast, isolated
+Integration Tests (25%) → API + DB
+E2E Tests (15%) → Full user journeys
+
+🧱 2. TOOL STACK (FINALIZED)
+🟢 Server
+Test Runner: Jest
+API Testing: Supertest
+DB: Test PostgreSQL (Docker)
+Mocking: Jest mocks
+
+🔵 Client
+Unit/UI: Jest + React Testing Library
+E2E: Playwright (preferred) or Cypress
+🟣 Shared
+CI/CD: GitHub Actions
+Coverage: Istanbul (built into Jest)
+📁 3. TEST STRUCTURE (MONOREPO STYLE)
+
+  /Server
+    /tests
+      /unit
+      /integration
+      /fixtures
+  /Client
+    /unit
+    /e2e
+  /shared
+    /mocks
+    /utils
+    
+⚙️ 4. Server TEST FRAMEWORK
+🔹 4.1 UNIT TESTS (SERVICES)
+Example: Product Service
+describe("Product Service", () => {
+  it("should create product", async () => {
+    const result = await createProduct(mockData);
+    expect(result.name).toBe(mockData.name);
+  });
+});
+Covers:
+Business logic
+Validation
+Edge cases
+🔹 4.2 INTEGRATION TESTS (API + DB)
+Example:
+import request from "supertest";
+
+describe("POST /products", () => {
+  it("should create product", async () => {
+    const res = await request(app)
+      .post("/products")
+      .send(mockProduct);
+
+    expect(res.statusCode).toBe(201);
+  });
+});
+Covers:
+API routes
+DB interaction
+Auth middleware
+🔹 4.3 DATABASE TEST SETUP
+Use separate test DB
+Reset DB before each test
+test_db → textile_test_db
+🎨 5. Client TEST FRAMEWORK
+🔹 5.1 UNIT TESTS (COMPONENTS)
+Example:
+import { render, screen } from "@testing-library/react";
+
+test("renders product card", () => {
+  render(<ProductCard product={mockProduct} />);
+  expect(screen.getByText(mockProduct.name)).toBeInTheDocument();
+});
+Covers:
+UI rendering
+Props handling
+Conditional logic
+🔹 5.2 INTEGRATION TESTS (UI FLOW)
+
+Example:
+
+Add to cart → verify cart state
+🔹 5.3 E2E TESTS (CRITICAL)
+Using Playwright
+test("user can purchase product", async ({ page }) => {
+  await page.goto("/");
+  await page.click("text=Shop Now");
+  await page.click("text=Add to Cart");
+  await page.click("text=Checkout");
+
+  await expect(page).toHaveURL("/checkout");
+});
+🧪 6. FEATURE-WISE TEST COVERAGE
+🛍️ Product System
+Create product
+List products
+Filter/sort
+👤 Auth System
+Signup
+Login
+JWT validation
+🛒 Cart System
+Add/remove items
+Quantity update
+💳 Checkout & Payment
+Order creation
+Payment success/failure
+Webhook validation
+🤖 AI Chat
+Query → response mapping
+Product recommendations
+📦 Orders
+Order creation
+Status update
+🔄 7. MOCKING STRATEGY
+🔹 Mock External Services
+Payment gateway (e.g., Razorpay)
+AI API
+jest.mock("razorpay");
+🔹 Mock API (Client)
+
+Use:
+
+MSW (Mock Service Worker)
+⚡ 8. TEST DATA MANAGEMENT
+🔹 Fixtures
+{
+  "product": {
+    "name": "Cotton Shirt",
+    "price": 999
+  }
+}
+🔹 Seed DB Before Tests
+Use scripts to insert test data
+🔐 9. SECURITY TESTING
+🔹 Must Test
+SQL injection
+Unauthorized access
+Token expiry
+🔹 Example
+expect(response.status).toBe(401);
+🚀 10. CI/CD TEST PIPELINE
+GitHub Actions Flow
+name: Test Pipeline
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm install
+      - run: npm run test
+📊 11. COVERAGE TARGET
+Layer	Target
+Unit	80–90%
+Integration	70%
+E2E	Critical flows only
+⚠️ 12. COMMON MISTAKES
+❌ Only E2E tests (slow + flaky)
+❌ No test DB isolation
+❌ Hardcoded test data
+❌ Ignoring edge cases
+🧠 13. ADVANCED (NEXT LEVEL)
+Visual regression testing
+Load testing (k6)
+Chaos testing
+Contract testing (Client ↔ Server)
+🎯 FINAL RESULT
+
+You now have:
+
+Scalable test architecture
+Full feature coverage
+CI/CD-ready pipeline
+Production-grade QA system

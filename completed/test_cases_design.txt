@@ -1,0 +1,413 @@
+Clothing Store - Test Cases Status (Implemented vs Pending)
+Reference: plan/test_cases_design.txt
+Last updated: 2026-03-29
+
+Scope baseline used for this status:
+- Client: Next.js landing page (`Client/app/page.js`, `Client/app/layout.js`)
+- Server: Flask API (`Server/app.py`)
+- DB setup: PostgreSQL bootstrap + schema (`Server/db.py`, `Server/schema.sql`, `Server/_verify_db.py`)
+
+============================================================
+COMPLETED TEST CASES (for features currently implemented)
+============================================================
+
+[Server API - Health and Content Endpoints]
+
+TC-API-001 | GET /health returns 200
+Precondition: Flask server is running.
+Steps: Call GET /health.
+Expected: HTTP 200 and JSON body.
+Status: Completed
+
+TC-API-002 | /health payload contract
+Precondition: Server running.
+Steps: Call GET /health and inspect keys.
+Expected: Keys `status`, `service`, `database`; `service` = `api`.
+Status: Completed
+
+TC-API-003 | /health shows ok when DB reachable
+Precondition: Valid DB credentials and DB up.
+Steps: Call GET /health.
+Expected: `status` = `ok`, `database` contains `connected`.
+Status: Completed
+
+TC-API-004 | /health shows degraded when DB unreachable
+Precondition: Stop DB or set wrong DB password.
+Steps: Start Flask and call GET /health.
+Expected: `status` = `degraded`; response still 200 with DB error message.
+Status: Completed
+
+TC-API-005 | GET /api/landing-summary returns 200
+Precondition: Server running.
+Steps: Call endpoint.
+Expected: HTTP 200 with JSON object.
+Status: Completed
+
+TC-API-006 | landing-summary schema validation
+Precondition: Server running.
+Steps: Validate keys from response.
+Expected: Contains `announcement`, `hero_title`, `top_chip`, `mid_chip`, `bottom_chip`.
+Status: Completed
+
+TC-API-007 | GET /api/featured-products returns list
+Precondition: Server running.
+Steps: Call endpoint.
+Expected: HTTP 200 and JSON array of products.
+Status: Completed
+
+TC-API-008 | featured-products item schema
+Precondition: Server running.
+Steps: Validate each product object.
+Expected: Keys include `tag`, `name`, `fabric_note`, `price_inr`, `image_url`, `alt`.
+Status: Completed
+
+TC-API-009 | featured-products data quality
+Precondition: Server running.
+Steps: Validate all `price_inr` values are numeric and positive.
+Expected: No null/negative price.
+Status: Completed
+
+TC-API-010 | GET /api/testimonials returns list
+Precondition: Server running.
+Steps: Call endpoint.
+Expected: HTTP 200 and JSON array.
+Status: Completed
+
+TC-API-011 | testimonials item schema
+Precondition: Server running.
+Steps: Validate testimonial objects.
+Expected: Each item has `quote`, `author`, `city`.
+Status: Completed
+
+TC-API-012 | CORS enabled for API
+Precondition: Server running.
+Steps: Send request with Origin header from client host.
+Expected: Access-Control-Allow-Origin present in response.
+Status: Completed
+
+[Database Connectivity and Initialization]
+
+TC-DB-001 | DB connection success path
+Precondition: Valid `.env` DB credentials.
+Steps: Execute check_connection path (`/health` or `_verify_db.py`).
+Expected: Connection success returns connected state.
+Status: Completed
+
+TC-DB-002 | DB connection failure path
+Precondition: Invalid DB credentials.
+Steps: Execute connection check.
+Expected: Failure handled gracefully (boolean false + message), no server crash.
+Status: Completed
+
+TC-DB-003 | initialize_database loads schema.sql
+Precondition: DB available and `schema.sql` exists.
+Steps: Start server; initialization runs.
+Expected: Schema SQL executed without fatal startup crash.
+Status: Completed
+
+TC-DB-004 | missing schema file raises clear error
+Precondition: Call initialize_database with wrong schema path.
+Steps: Run function.
+Expected: FileNotFoundError with explicit file path.
+Status: Completed
+
+TC-DB-005 | idempotent table creation
+Precondition: DB already initialized once.
+Steps: Run initialize_database again.
+Expected: No duplicate object errors because IF NOT EXISTS used.
+Status: Completed
+
+TC-DB-006 | verify expected table count
+Precondition: DB initialized.
+Steps: Run `python Server/_verify_db.py`.
+Expected: EXPECTED_TABLES_FOUND equals 16.
+Status: Completed
+
+TC-DB-007 | verify expected table names
+Precondition: DB initialized.
+Steps: Run verification script and inspect TABLES output.
+Expected: Includes users, products, product_variants, carts, orders, reviews, etc.
+Status: Completed
+
+[Database Schema Constraints and Integrity]
+
+TC-SCHEMA-001 | users.email unique constraint
+Precondition: DB initialized.
+Steps: Insert two users with same email.
+Expected: Second insert fails with unique constraint violation.
+Status: Completed
+
+TC-SCHEMA-002 | users.phone unique constraint
+Precondition: DB initialized.
+Steps: Insert two users with same phone.
+Expected: Second insert rejected.
+Status: Completed
+
+TC-SCHEMA-003 | product_variants.sku unique constraint
+Precondition: DB initialized.
+Steps: Insert variants with same sku.
+Expected: Duplicate sku rejected.
+Status: Completed
+
+TC-SCHEMA-004 | cart_items unique (cart_id, product_variant_id)
+Precondition: Existing cart and variant.
+Steps: Insert duplicate cart item pair.
+Expected: Duplicate row rejected.
+Status: Completed
+
+TC-SCHEMA-005 | reviews unique (user_id, product_id)
+Precondition: Existing user and product.
+Steps: Insert two reviews by same user for same product.
+Expected: Second review rejected.
+Status: Completed
+
+TC-SCHEMA-006 | reviews.rating check 1..5
+Precondition: DB initialized.
+Steps: Insert rating 0 or 6.
+Expected: Check constraint blocks invalid rating.
+Status: Completed
+
+TC-SCHEMA-007 | cart_items.quantity > 0 check
+Precondition: DB initialized.
+Steps: Insert quantity 0.
+Expected: Check constraint violation.
+Status: Completed
+
+TC-SCHEMA-008 | FK cascade from users to user_profiles
+Precondition: User with linked profile exists.
+Steps: Delete user.
+Expected: user_profiles row deleted (ON DELETE CASCADE).
+Status: Completed
+
+TC-SCHEMA-009 | FK cascade from products to product_variants
+Precondition: Product with variants exists.
+Steps: Delete product.
+Expected: product_variants rows deleted.
+Status: Completed
+
+TC-SCHEMA-010 | FK cascade from products to product_images
+Precondition: Product with images exists.
+Steps: Delete product.
+Expected: product_images rows deleted.
+Status: Completed
+
+TC-SCHEMA-011 | FK cascade from orders to order_items
+Precondition: Order with items exists.
+Steps: Delete order.
+Expected: order_items rows deleted.
+Status: Completed
+
+TC-SCHEMA-012 | index presence for key lookups
+Precondition: DB initialized.
+Steps: Query `pg_indexes` for idx_products_name, idx_orders_user_id, idx_variants_product_id.
+Expected: All three indexes exist.
+Status: Completed
+
+[Client Landing Page - Data Hydration and Fallback]
+
+TC-UI-001 | Landing page renders with fallback content
+Precondition: Client app running; API unavailable.
+Steps: Open home page.
+Expected: Hero, products, testimonials still visible with fallback data.
+Status: Completed
+
+TC-UI-002 | API hydrate updates summary
+Precondition: Client and API running.
+Steps: Open home page and wait for fetch completion.
+Expected: Header/hero text reflects API payload when returned.
+Status: Completed
+
+TC-UI-003 | API hydrate updates featured products
+Precondition: Client and API running.
+Steps: Load page and inspect product cards.
+Expected: Cards map API list and render dynamic values.
+Status: Completed
+
+TC-UI-004 | API hydrate updates testimonials
+Precondition: Client and API running.
+Steps: Load page and inspect testimonial section.
+Expected: Testimonials render API response items.
+Status: Completed
+
+TC-UI-005 | API failure does not crash page
+Precondition: API endpoint returns non-200 or unreachable.
+Steps: Load page.
+Expected: No uncaught UI crash; fallback remains.
+Status: Completed
+
+[Client Landing Page - Interactions and UX]
+
+TC-UI-006 | Mobile menu toggle open/close
+Precondition: Mobile viewport.
+Steps: Tap hamburger icon twice.
+Expected: Mobile nav opens then closes; aria-expanded toggles.
+Status: Completed
+
+TC-UI-007 | Mobile nav link closes menu
+Precondition: Mobile menu open.
+Steps: Tap any nav item.
+Expected: Menu closes immediately.
+Status: Completed
+
+TC-UI-008 | FAQ accordion open behavior
+Precondition: Home page loaded.
+Steps: Click first FAQ question.
+Expected: Selected FAQ expands and shows answer.
+Status: Completed
+
+TC-UI-009 | FAQ accordion toggle behavior
+Precondition: Same FAQ already open.
+Steps: Click same question again.
+Expected: FAQ collapses and answer hides.
+Status: Completed
+
+TC-UI-010 | 3D card tilt reacts to mouse move
+Precondition: Desktop viewport.
+Steps: Move mouse over product card.
+Expected: CSS variables `--rotateX` and `--rotateY` updated.
+Status: Completed
+
+TC-UI-011 | 3D card tilt resets on mouse leave
+Precondition: Product card hovered.
+Steps: Move cursor out.
+Expected: Rotations reset to 0deg.
+Status: Completed
+
+TC-UI-012 | Reveal animation via IntersectionObserver
+Precondition: Browser supports IntersectionObserver.
+Steps: Scroll through page sections.
+Expected: `.reveal` elements receive `is-visible` when intersecting.
+Status: Completed
+
+TC-UI-013 | Reveal fallback when observer unsupported
+Precondition: Simulate no IntersectionObserver.
+Steps: Load page.
+Expected: All reveal nodes become visible without observer.
+Status: Completed
+
+TC-UI-014 | Footer year auto updates
+Precondition: Page loaded.
+Steps: Inspect footer year.
+Expected: Displays current year from `new Date().getFullYear()`.
+Status: Completed
+
+TC-UI-015 | Newsletter email field required validation
+Precondition: Page loaded.
+Steps: Submit newsletter form with empty email.
+Expected: Browser blocks submit due to required email input.
+Status: Completed
+
+[Client Metadata]
+
+TC-META-001 | Layout metadata title set
+Precondition: Client app build/dev server running.
+Steps: Inspect document title.
+Expected: Title equals "Vastra Atelier | Traditional Clothing Store".
+Status: Completed
+
+TC-META-002 | Layout language attribute
+Precondition: Page loaded.
+Steps: Inspect root html element.
+Expected: `lang="en"` is set.
+Status: Completed
+
+============================================================
+PENDING TEST CASES (planned in document, feature not implemented yet)
+============================================================
+
+These cases are intentionally pending because corresponding product features
+or endpoints are not implemented in current code.
+
+[Authentication and Session]
+
+TC-PEND-AUTH-001 | User signup API and validation
+Expected when implemented: create user with hashed password, validate duplicate email.
+Status: Pending
+
+TC-PEND-AUTH-002 | User login API and session token generation
+Expected when implemented: login with valid credentials and reject invalid login.
+Status: Pending
+
+TC-PEND-AUTH-003 | JWT/token expiry and protected route access
+Expected when implemented: expired token denied with 401.
+Status: Pending
+
+[Catalog and Search]
+
+TC-PEND-CAT-001 | Product list API with pagination
+Expected when implemented: paginated listing with stable ordering.
+Status: Pending
+
+TC-PEND-CAT-002 | Product filter by category/price/fabric
+Expected when implemented: filtered responses match query params.
+Status: Pending
+
+TC-PEND-CAT-003 | Product sort by price/popularity/newest
+Expected when implemented: correct sorted order.
+Status: Pending
+
+[Cart and Wishlist]
+
+TC-PEND-CART-001 | Add to cart API
+Expected when implemented: cart item created or quantity merged.
+Status: Pending
+
+TC-PEND-CART-002 | Update cart quantity API
+Expected when implemented: quantity updates and respects stock/business rules.
+Status: Pending
+
+TC-PEND-CART-003 | Remove cart item API
+Expected when implemented: item removed and totals recalculated.
+Status: Pending
+
+TC-PEND-WISH-001 | Add/remove wishlist API
+Expected when implemented: wishlist toggles and respects unique user-product pair.
+Status: Pending
+
+[Checkout, Orders, Payments]
+
+TC-PEND-ORDER-001 | Checkout order creation
+Expected when implemented: order and order_items transactionally persisted.
+Status: Pending
+
+TC-PEND-ORDER-002 | Payment success/failure handling
+Expected when implemented: payment_status transitions correctly.
+Status: Pending
+
+TC-PEND-ORDER-003 | Payment webhook signature validation
+Expected when implemented: invalid signatures rejected.
+Status: Pending
+
+TC-PEND-ORDER-004 | Order history API per user
+Expected when implemented: only requesting user's orders returned.
+Status: Pending
+
+[Review and Rating]
+
+TC-PEND-REV-001 | Review create/update/delete API
+Expected when implemented: one review per user per product with proper authorization.
+Status: Pending
+
+[AI and Recommendation]
+
+TC-PEND-AI-001 | AI chat query-response flow
+Expected when implemented: query returns structured answer and no server errors.
+Status: Pending
+
+TC-PEND-AI-002 | Personalized product recommendation endpoint
+Expected when implemented: recommendation list generated from user context/history.
+Status: Pending
+
+[Security and Non-functional]
+
+TC-PEND-SEC-001 | SQL injection hardening in dynamic query endpoints
+Expected when implemented: malicious input does not alter query behavior.
+Status: Pending
+
+TC-PEND-PERF-001 | API load baseline and p95 latency targets
+Expected when implemented: key endpoints satisfy performance SLO.
+Status: Pending
+
+TC-PEND-E2E-001 | End-to-end purchase journey automation
+Expected when implemented: browse -> add cart -> checkout -> payment success.
+Status: Pending

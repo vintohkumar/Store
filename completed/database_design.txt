@@ -1,0 +1,123 @@
+# Database Design and Security Completion Report
+
+Date: 2026-03-29
+Project: Clothing Store
+Database: PostgreSQL (`clothing_store`)
+
+## 1) Verification Summary
+
+- Connection validated with `db_admin` on port `5433`
+- Schema initialization executed successfully
+- Expected core tables created and verified: 16/16
+  - users, user_profiles, login_sessions, locales, user_addresses
+  - categories, products, product_variants, product_images
+  - orders, order_items, payments
+  - wishlists, carts, cart_items, reviews
+- Core indexes verified in schema:
+  - idx_products_name
+  - idx_orders_user_id
+  - idx_variants_product_id
+
+## 2) Current Security Posture (As-Is)
+
+Runtime checks (from current database session):
+- `current_user`: `db_admin`
+- `ssl`: `off` (connection encryption currently not enforced)
+- `ssl_in_use`: `false`
+- `password_encryption`: `scram-sha-256` (good)
+- `row_security`: `on` and table-level RLS policies are now enabled on protected tables
+- `listen_addresses`: `*` (DB accepts remote network connections if firewall/network allows)
+- Role flags for `db_admin`: non-superuser, no createdb, no createrole (good baseline)
+- `db_admin` has `CREATE` on DB and `CREATE` on `public` schema
+
+Security level assessment: MEDIUM-HIGH (post RBAC/RLS hardening)
+- Positive: SCRAM password hashing, non-superuser app role, relational constraints.
+- Positive: RBAC grants tightened and RLS enabled/forced on user-owned tables.
+- Gaps: TLS still disabled, schema split not yet done (`core/commerce/auth`), no secret-rotation policy, no audit triggers/log hardening.
+
+## 3) Features and Functionalities Status
+
+### Completed
+
+- [x] PostgreSQL connectivity from Flask via environment config
+- [x] Central DB connection module (`Server/db.py`)
+- [x] Idempotent schema setup (`Server/schema.sql`)
+- [x] UUID-based primary keys with `pgcrypto`
+- [x] Core e-commerce entity model implemented (users/products/orders/cart/wishlist/reviews/payments)
+- [x] Key foreign-key relationships and cascade rules
+- [x] Basic data integrity checks (rating range, cart quantity > 0, uniqueness constraints)
+- [x] Core performance indexes (product name, orders by user, variants by product)
+- [x] Health endpoint reports DB status
+- [x] Security hardening SQL added and applied (`Server/security_hardening.sql`)
+- [x] RBAC tightened for `app_user` / `readonly_user` / `db_admin`
+- [x] RLS enabled + forced on 11 protected tables with user isolation policies
+- [x] Direct access to `login_sessions` revoked from app/read roles
+- [x] DB helper added for RLS context (`set_app_user_context` in `Server/db.py`)
+- [x] Least-privilege script added and applied (`Server/least_privilege_roles.sql`)
+- [x] Runtime roles cannot create objects in `public` (`app_user`, `readonly_user`)
+
+### Pending (Security Hardening + Enterprise Readiness)
+
+- [ ] Enforce TLS for DB transport:
+  - Set PostgreSQL `ssl = on`
+  - Use certificate-based trust and set client `DB_SSLMODE=require` (or `verify-full` with CA)
+- [ ] Restrict network exposure:
+  - Change `listen_addresses='localhost'` unless remote DB access is required
+  - Tighten firewall rules to app host only
+- [ ] Apply full least-privilege role split:
+  - `db_migrator` role for schema migrations (CREATE/ALTER)
+  - `db_app` role for runtime CRUD only (no CREATE/DROP/ALTER)
+  - status: pending role creation because current executor lacks `CREATEROLE`
+- [ ] Remove app dependency on `public` CREATE privileges after initial migration
+- [ ] Migrate tables from `public` into dedicated schemas (`core`, `commerce`, `auth`) as per plan
+- [ ] Protect auth flows via SECURITY DEFINER functions (instead of direct session table access)
+- [ ] Encrypt/highly protect sensitive columns:
+  - `login_sessions.token` should be hashed or encrypted-at-rest pattern
+  - evaluate PII handling policy for phone/address data
+- [ ] Add auditability:
+  - `updated_at` triggers for mutable tables
+  - audit trail table for critical actions (auth, payment state, order state)
+- [ ] Add credential operations policy:
+  - rotate DB password regularly
+  - avoid plaintext secrets in local files for production deployments
+- [ ] Backup/restore readiness:
+  - scheduled encrypted backups
+  - periodic restore drill and retention policy
+- [ ] Monitoring and alerting:
+  - failed login monitoring
+  - lock/slow query metrics
+  - abnormal access pattern alerts
+
+## 4) Recommended High-Security Target Configuration
+
+Target security level: HIGH
+
+1. Transport Security
+- Enable PostgreSQL SSL and enforce encrypted connections.
+- Move client to `DB_SSLMODE=verify-full` and configure CA cert path.
+
+2. Access Control Model
+- Keep app on non-superuser role.
+- Remove schema DDL rights from runtime role.
+- Restrict privileges to exact tables and operations needed.
+
+3. Data Protection
+- Keep SCRAM (`scram-sha-256`) and enforce strong password policy.
+- Hash session tokens before storing.
+- Classify sensitive columns and apply encryption strategy where required.
+
+4. Multi-Tenant/User Isolation
+- Implement per-user RLS policies and test bypass resistance.
+
+5. Governance and Operations
+- Enable stronger DB logging/audit for auth + DDL events.
+- Add automated secure backups + restore testing.
+- Add secret rotation and incident-response playbook.
+
+## 5) Immediate Next Actions (Execution Order)
+
+1) Turn on DB SSL and enforce client SSL mode.
+2) Create separate `db_migrator` and `db_app` roles; move app to least privilege.
+3) Hash login session tokens and add expiry cleanup job.
+4) Add SECURITY DEFINER auth functions and lock direct table access further.
+5) Add audit triggers and backup/restore automation.

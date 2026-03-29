@@ -10,11 +10,15 @@ export const metadata = {
 };
 
 import "./globals.css";
+import ClientActionTracker from "./ClientActionTracker";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ClientActionTracker />
+        {children}
+      </body>
     </html>
   );
 }

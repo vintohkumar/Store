@@ -1,0 +1,47 @@
+2026-03-29 23:09:47,912 | INFO | Server logging initialized. log_file=D:\Projects\Clothing_store\Store\logs\server_logs.txt
+2026-03-29 23:09:47,971 | WARNING |  * Debugger is active!
+2026-03-29 23:09:48,008 | INFO |  * Debugger PIN: 143-941-866
+2026-03-29 23:09:54,127 | INFO |  * Detected change in 'D:\\Projects\\Clothing_store\\Store\\Server\\app.py', reloading
+2026-03-29 23:09:54,931 | INFO | Server logging initialized. log_file=D:\Projects\Clothing_store\Store\logs\server_logs.txt
+2026-03-29 23:09:54,965 | WARNING |  * Debugger is active!
+2026-03-29 23:09:54,991 | INFO |  * Debugger PIN: 143-941-866
+2026-03-29 23:34:36,492 | INFO | Server logging initialized. log_file=D:\Projects\Clothing_store\Store\logs\server_logs.txt
+2026-03-29 23:34:36,552 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.29.149:5000
+2026-03-29 23:34:36,552 | INFO | [33mPress CTRL+C to quit[0m
+2026-03-29 23:34:36,554 | INFO |  * Restarting with stat
+2026-03-29 23:34:37,510 | INFO | Server logging initialized. log_file=D:\Projects\Clothing_store\Store\logs\server_logs.txt
+2026-03-29 23:34:37,562 | WARNING |  * Debugger is active!
+2026-03-29 23:34:37,617 | INFO |  * Debugger PIN: 143-941-866
+2026-03-29 23:34:43,905 | INFO | REQUEST start method=OPTIONS path=/api/auth/send-otp ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:43,906 | INFO | REQUEST done method=OPTIONS path=/api/auth/send-otp status=200 duration_ms=0.8
+2026-03-29 23:34:43,907 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:43] "OPTIONS /api/auth/send-otp HTTP/1.1" 200 -
+2026-03-29 23:34:43,918 | INFO | REQUEST start method=POST path=/api/auth/send-otp ip=127.0.0.1 args={} payload={'method': 'email', 'identifier': 'vinothkumar0896@gmail.com'}
+2026-03-29 23:34:44,052 | INFO | REQUEST done method=POST path=/api/auth/send-otp status=200 duration_ms=135.03
+2026-03-29 23:34:44,054 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:44] "POST /api/auth/send-otp HTTP/1.1" 200 -
+2026-03-29 23:34:56,949 | INFO | REQUEST start method=OPTIONS path=/api/auth/verify-otp ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:56,949 | INFO | REQUEST done method=OPTIONS path=/api/auth/verify-otp status=200 duration_ms=0.59
+2026-03-29 23:34:56,951 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:56] "OPTIONS /api/auth/verify-otp HTTP/1.1" 200 -
+2026-03-29 23:34:56,958 | INFO | REQUEST start method=POST path=/api/auth/verify-otp ip=127.0.0.1 args={} payload={'method': 'email', 'identifier': 'vinothkumar0896@gmail.com', 'otp': '***'}
+2026-03-29 23:34:56,959 | INFO | REQUEST done method=POST path=/api/auth/verify-otp status=200 duration_ms=1.5
+2026-03-29 23:34:56,960 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:56] "POST /api/auth/verify-otp HTTP/1.1" 200 -
+2026-03-29 23:34:57,752 | INFO | REQUEST start method=GET path=/api/landing-summary ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:57,756 | INFO | REQUEST done method=GET path=/api/landing-summary status=200 duration_ms=4.49
+2026-03-29 23:34:57,758 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:57] "GET /api/landing-summary HTTP/1.1" 200 -
+2026-03-29 23:34:57,775 | INFO | REQUEST start method=GET path=/api/featured-products ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:57,787 | INFO | REQUEST done method=GET path=/api/featured-products status=200 duration_ms=12.13
+2026-03-29 23:34:57,792 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:57] "GET /api/featured-products HTTP/1.1" 200 -
+2026-03-29 23:34:57,801 | INFO | REQUEST start method=GET path=/api/testimonials ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:57,812 | INFO | REQUEST start method=GET path=/api/landing-summary ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:57,820 | INFO | REQUEST done method=GET path=/api/testimonials status=200 duration_ms=18.86
+2026-03-29 23:34:57,823 | INFO | REQUEST done method=GET path=/api/landing-summary status=200 duration_ms=10.8
+2026-03-29 23:34:57,824 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:57] "GET /api/landing-summary HTTP/1.1" 200 -
+2026-03-29 23:34:57,838 | INFO | REQUEST start method=GET path=/api/featured-products ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:57,851 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:57] "GET /api/testimonials HTTP/1.1" 200 -
+2026-03-29 23:34:57,865 | INFO | REQUEST done method=GET path=/api/featured-products status=200 duration_ms=26.81
+2026-03-29 23:34:57,868 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:57] "GET /api/featured-products HTTP/1.1" 200 -
+2026-03-29 23:34:57,904 | INFO | REQUEST start method=GET path=/api/testimonials ip=127.0.0.1 args={} payload=None
+2026-03-29 23:34:57,908 | INFO | REQUEST done method=GET path=/api/testimonials status=200 duration_ms=4.07
+2026-03-29 23:34:57,909 | INFO | 127.0.0.1 - - [29/Mar/2026 23:34:57] "GET /api/testimonials HTTP/1.1" 200 -
